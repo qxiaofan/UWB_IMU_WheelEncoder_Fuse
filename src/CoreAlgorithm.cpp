@@ -67,6 +67,56 @@ void showVslamTrajectory(std::vector<vslam_observe> all_measure_data,const std::
     return;
 }
 
+void showOriginTime(std::vector<imu_observe> &imu_observe,
+                    std::vector<wheel_observe> &wheel_observe,
+                    const std::string &picture_name, bool is_write)
+{
+    // unify the unit of imu yaw angle and vslam yaw angle
+    std::vector<Eigen::Vector2d> imu_yaw_normal;
+    std::vector<Eigen::Vector2d> vslam_yaw_normal;
+    for(size_t i = 0; i < imu_observe.size(); i++)
+    {
+        Eigen::Vector2d imu_yawi;
+        imu_yawi[0] = imu_observe[i].timestamp;
+        imu_yawi[1] = imu_observe[i].angle.x * 2;
+        imu_yaw_normal.push_back(imu_yawi);
+    }
+    for(size_t i = 0; i < wheel_observe.size(); i++)
+    {
+        Eigen::Vector2d vslam_yawi;
+        vslam_yawi[0] = wheel_observe[i].timestamp;
+        vslam_yawi[1] = -1 * wheel_observe[i].wheel.z * 180 / math_pi;
+        vslam_yaw_normal.push_back(vslam_yawi);
+    }
+    cv::Mat image_show(800,800,CV_8UC3,cv::Scalar(255,255,255));
+    cv::Point point_imu_last(0,400);
+    for(size_t i = 0; i < imu_yaw_normal.size()/2;i++)
+    {
+        cv::Point point_center;
+        point_center.x = int(5*(imu_yaw_normal[i][0] - imu_yaw_normal[0][0]));
+        point_center.y = int(imu_yaw_normal[i][1] + 400);
+        cv::line(image_show,point_imu_last,point_center,cv::Scalar(0,0,255),1);
+        point_imu_last = point_center;
+    }
+
+    cv::Point point_vslam_last(0,400);
+    for(size_t i = 0; i < vslam_yaw_normal.size()/2;i++)
+    {
+        cv::Point point_center;
+        point_center.x = int(5*(vslam_yaw_normal[i][0] - vslam_yaw_normal[0][0]));
+        point_center.y = int(vslam_yaw_normal[i][1] + 400);
+        cv::line(image_show,point_vslam_last,point_center,cv::Scalar(255,255,0),1);
+        point_vslam_last = point_center;
+    }
+    if(is_write)
+        cv::imwrite(picture_name,image_show);
+    else{
+        cv::imshow(picture_name,image_show);
+        cv::waitKey(0);
+    }
+    return;
+}
+
 void showCalibrateTime(std::vector<Eigen::Vector2d> imu_yaw_normal,
                        std::vector<Eigen::Vector2d> vslam_yaw_normal,
                        double time_imu_vslam,
@@ -82,8 +132,8 @@ void showCalibrateTime(std::vector<Eigen::Vector2d> imu_yaw_normal,
     {
         cv::Point point_center;
         point_center.x = int(5 * (imu_yaw_normal[i][0] - vslam_yaw_normal[0][0]));
-        point_center.y = int(imu_yaw_normal[i][1] + 400);
-        cv::line(image_show, point_imu_last, point_center, cv::Scalar(0, 255, 0), 1);
+        point_center.y = int(abs(imu_yaw_normal[i][1]) + 400);
+        cv::line(image_show, point_imu_last, point_center, cv::Scalar(0, 0, 255), 1);
         point_imu_last = point_center;
     }
     cv::Point point_vslam_last(0, 400);
@@ -91,8 +141,8 @@ void showCalibrateTime(std::vector<Eigen::Vector2d> imu_yaw_normal,
     {
         cv::Point point_center;
         point_center.x = int(5 * (vslam_yaw_normal[i][0] - vslam_yaw_normal[0][0]));
-        point_center.y = int(vslam_yaw_normal[i][1] + 400);
-        cv::line(image_show, point_vslam_last, point_center, cv::Scalar(255, 0, 0), 1);
+        point_center.y = int(abs(vslam_yaw_normal[i][1]) + 400);
+        cv::line(image_show, point_vslam_last, point_center, cv::Scalar(255, 255, 0), 1);
         point_vslam_last = point_center;
     }
 
@@ -212,7 +262,7 @@ void showTrajectoryErrorRealTime(std::vector<uwb_observe> &uwb_observe,
 }
 
 // accumulate the wheel data(x,y,theta)
-void RunAccumulateWheel(std::vector<wheel_observe> &wheel_observe)
+void runAccumulateWheel(std::vector<wheel_observe> &wheel_observe)
 {
     // debug for time calibration
 //    cv::Mat image_show(800, 800, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -230,7 +280,7 @@ void RunAccumulateWheel(std::vector<wheel_observe> &wheel_observe)
 }
 
 // time calibration: imu = vslam + time_imu_vslam
-void RunAccumulateImu(std::vector<imu_observe> &imu_observe)
+void runAccumulateImu(std::vector<imu_observe> &imu_observe)
 {
 //    // debug for time calibration
 //    cv::Mat image_show(800, 800, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -257,9 +307,9 @@ void RunAccumulateImu(std::vector<imu_observe> &imu_observe)
 
 }
 
-void runParticleFilter(std::vector<uwb_observe> &uwb_observe)
+void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<uwb_observe> &uwb_observe_filter)
 {
-
+    uwb_observe_filter.clear();
     //UWB particle filter
     //三维
     std::vector<cv::Point3f> vcurrent_pos, vparticle_pos;
@@ -277,29 +327,35 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe)
 
     ConDensation condens(DP,nParticles);
 
-    cv::Mat img((int)xRange,(int)xRange,CV_8UC3);
-    cv::namedWindow("UWB particle filter");
+    //cv::Mat img((int)xRange,(int)xRange,CV_8UC3);
+    //cv::namedWindow("UWB particle filter");
 
     condens.initSampleSet(LB,UB,dyna);
 
-    for(size_t i = 0; i < uwb_observe.size(); ++i)
+    uwb_observe uwb_filtered;
+
+    for(size_t i = 0; i < uwb_observe_origin.size(); ++i)
     {
         current_uwb cur_uwb;
-        cv::waitKey(30);
+        //cv::waitKey(30);
 
-        cur_uwb.x = uwb_observe[i].point3d.x * 100;
-        cur_uwb.y = uwb_observe[i].point3d.y * 100;
-        cur_uwb.z = uwb_observe[i].point3d.z * 100;
+        cur_uwb.x = uwb_observe_origin[i].point3d.x * 100;
+        cur_uwb.y = uwb_observe_origin[i].point3d.y * 100;
+        cur_uwb.z = uwb_observe_origin[i].point3d.z * 100;
 
         measurement(0) = float(cur_uwb.x);
         measurement(1) = float(cur_uwb.y);
         measurement(2) = float(cur_uwb.z);
 
-        cv::Point3f measPt(cur_uwb.x,cur_uwb.y,cur_uwb.z);
+        cv::Point3d measPt(cur_uwb.x,cur_uwb.y,cur_uwb.z);
         vcurrent_pos.push_back(measPt);
 
+        uwb_filtered = uwb_observe_origin[i];
+        uwb_filtered.point3d = measPt;
+        uwb_observe_filter.push_back(uwb_filtered);
+
         //Clear screen
-        img = cv::Scalar::all(100);
+        //img = cv::Scalar::all(100);
 
         //Update and get prediction:
         const cv::Mat_<float> &pred = condens.correct(measurement);
@@ -309,31 +365,31 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe)
         std::cout<<"measPt: "<<measPt.x <<" "<<measPt.y<<" "<<measPt.z<<" "
                  <<"statePt: "<<statePt.x <<" "<<statePt.y<<" "<<statePt.z<<std::endl;
 
-        for(int s = 0; s < condens.sampleCount();s++)
-        {
-            cv::Point2f partPt(condens.sample(s,0), condens.sample(s,1));
-            drawCross(img,partPt,cv::Scalar(255,90,(int)(s*255.0)/(float)condens.sampleCount()),2);
-        }
-
-
-        for(size_t i = 0; i < vcurrent_pos.size() - 1; i++)
-        {
-            cv::line(img,cv::Point2f(vcurrent_pos[i].x,vcurrent_pos[i].y),cv::Point2f(vcurrent_pos[i + 1].x,vcurrent_pos[i + 1].y),cv::Scalar(255,0,0),1);
-        }
-
-        for(size_t i = 0; i < vparticle_pos.size() - 1; i++)
-        {
-            cv::line(img,cv::Point2f(vparticle_pos[i].x,vparticle_pos[i].y),cv::Point2f(vparticle_pos[i + 1].x,vparticle_pos[i + 1].y),cv::Scalar(0,255,0),1);
-        }
-
-        drawCross(img,cv::Point2f(statePt.x,statePt.y),cv::Scalar(255,255,255),5);
-        drawCross(img,cv::Point2f(measPt.x,measPt.y),cv::Scalar(0,0,255),5);
-
-        cv::imwrite("particle_filter.png",img);
-
-        cv::Mat imgshow = cv::Mat::zeros(640,640,CV_8UC3);
-        cv::resize(img,imgshow,cv::Size(500,500));
-        cv::imshow("UWB particle filter",imgshow);
+//        for(int s = 0; s < condens.sampleCount();s++)
+//        {
+//            cv::Point2f partPt(condens.sample(s,0), condens.sample(s,1));
+//            drawCross(img,partPt,cv::Scalar(255,90,(int)(s*255.0)/(float)condens.sampleCount()),2);
+//        }
+//
+//
+//        for(size_t i = 0; i < vcurrent_pos.size() - 1; i++)
+//        {
+//            cv::line(img,cv::Point2f(vcurrent_pos[i].x,vcurrent_pos[i].y),cv::Point2f(vcurrent_pos[i + 1].x,vcurrent_pos[i + 1].y),cv::Scalar(255,0,0),1);
+//        }
+//
+//        for(size_t i = 0; i < vparticle_pos.size() - 1; i++)
+//        {
+//            cv::line(img,cv::Point2f(vparticle_pos[i].x,vparticle_pos[i].y),cv::Point2f(vparticle_pos[i + 1].x,vparticle_pos[i + 1].y),cv::Scalar(0,255,0),1);
+//        }
+//
+//        drawCross(img,cv::Point2f(statePt.x,statePt.y),cv::Scalar(255,255,255),5);
+//        drawCross(img,cv::Point2f(measPt.x,measPt.y),cv::Scalar(0,0,255),5);
+//
+//        cv::imwrite("particle_filter.png",img);
+//
+//        cv::Mat imgshow = cv::Mat::zeros(640,640,CV_8UC3);
+//        cv::resize(img,imgshow,cv::Size(500,500));
+//        cv::imshow("UWB particle filter",imgshow);
     }
 
     return;
@@ -362,6 +418,7 @@ public:
 
 void runUKarmanFilter(std::vector<uwb_observe> &uwb_observe_origin, std::vector<uwb_observe> &uwb_observe_filter)
 {
+    uwb_observe_filter.clear();
     float xRange = 800.0f;
     cv::Mat img((int)xRange,(int)xRange,CV_8UC3);
 
@@ -405,6 +462,8 @@ void runUKarmanFilter(std::vector<uwb_observe> &uwb_observe_origin, std::vector<
 
     std::vector<cv::Point2f> vcurrent_pos,vukf_pos;
 
+    uwb_observe uwb_filtered;
+
     for(unsigned int k = 0; k < uwb_observe_origin.size();k++)
     {
         cv::Point2f measPt = cv::Point2f(uwb_observe_origin[k].point3d.x*100,
@@ -428,6 +487,11 @@ void runUKarmanFilter(std::vector<uwb_observe> &uwb_observe_origin, std::vector<
         tracked_point.ukf(x,z);
 
         cv::Point2f statePt= cv::Point2f(x(0,0),x(1,0));
+
+        uwb_filtered = uwb_observe_origin[k];
+        uwb_filtered.point3d.x = statePt.x;
+        uwb_filtered.point3d.y = statePt.y;
+        uwb_observe_filter.push_back(uwb_filtered);
 
         vukf_pos.push_back(statePt);
 

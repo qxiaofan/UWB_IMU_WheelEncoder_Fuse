@@ -43,12 +43,15 @@ void RunTimeCalibration(std::vector<imu_observe> &imu_observe, std::vector<wheel
         if(vslam_window.size() >= 20)
             break;
     }
-    cout << vslam_window.size() << std::endl;
+
+    cout << "vslam_window.size() == "<<vslam_window.size() << std::endl;
+
     if(vslam_window.size() < 20)
         cout << "no rotation in vslam data, can't calibration timestamp" << std::endl;
 
     // sliding window of imu data till error < 0.5
     bool push = false;
+
     std::vector<std::pair<int, double>> imu_candidate;
     for(size_t i = 0; i < imu_yaw_normal.size(); i++)
     {
@@ -63,7 +66,7 @@ void RunTimeCalibration(std::vector<imu_observe> &imu_observe, std::vector<wheel
 
         if(push)
         {
-//            cout << "imu i: " << i << "; error_tmp: " << error_tmp << std::endl;
+//          cout << "imu i: " << i << "; error_tmp: " << error_tmp << std::endl;
             imu_candidate.push_back(std::pair<int, double>(i, error_tmp));
         }
         if(push == false && error_tmp < 50)
@@ -91,6 +94,7 @@ void RunTimeCalibration(std::vector<imu_observe> &imu_observe, std::vector<wheel
     cout << "time_imu_vslam: " << time_imu_vslam << std::endl;
 
     showCalibrateTime(imu_yaw_normal, vslam_yaw_normal, time_imu_vslam, "calibrate_time.png", true);
+
 
     return;
 }

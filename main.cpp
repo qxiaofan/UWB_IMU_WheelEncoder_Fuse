@@ -4,6 +4,7 @@
 #include "opencv2/opencv.hpp"
 
 #include "CoreAlgorithm.h"
+#include "calibrate.h"
 
 //利用UWB采集定位数据，保存到data.txt文件中
 int main01() {
@@ -100,7 +101,6 @@ int main(int argc,char **argv)
     std::vector<wheel_observe> all_wheel_data;
     LoadWheelMeasure(wheelEncoderFile,all_wheel_data);
 
-
     std::vector<vslam_observe> all_vslam_data;
     LoadVslamMeasure(wheelEncoderFile,all_vslam_data);
 
@@ -117,21 +117,24 @@ int main(int argc,char **argv)
 
     //filter the uwb data by ukf
     std::vector<uwb_observe> uwb_observe_filtered;
-    runUKarmanFilter(uwb_observe_origin,uwb_observe_filtered);
+    //runUKarmanFilter(uwb_observe_origin,uwb_observe_filtered);
 
-    runParticleFilter(uwb_observe_origin);
+    runParticleFilter(uwb_observe_origin,uwb_observe_filtered);
+
+    //yong.qi added for test
+    showOriginTime(all_imu_data,all_wheel_data,"origin_time.png",true);
+    //yong.qi ended
 
     double time_imu_vslam = -1.0;
     double time_imu_uwb = 0.0;
-    runTimeCalibration(all_imu_data, all_wheel_data, time_imu_vslam);
+    RunTimeCalibration(all_imu_data, all_wheel_data, time_imu_vslam);
 
     Eigen::Matrix4d pose_imu_vslam = Eigen::Matrix4d::Identity();
     Eigen::Matrix4d pose_uwb_vslam = Eigen::Matrix4d::Identity();
     double time_uwb_vslam = time_imu_vslam;
-    RunPoseCalibration(all_uwb_fitered, all_vslam_data, time_uwb_vslam, pose_uwb_vslam);
-
-    RunAccumulateWheel(all_wheel_data);
-//    RunAccumulateImu(all_imu_data);
+    RunPoseCalibration(uwb_observe_filtered, all_vslam_data, time_uwb_vslam, pose_uwb_vslam);
+    runAccumulateWheel(all_wheel_data);
+    runAccumulateImu(all_imu_data);
 
     return 0;
 }
