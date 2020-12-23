@@ -90,11 +90,9 @@ int main01() {
     return 0;
 }
 
-
-
 int main(int argc,char **argv)
 {
-    //ofstream cmdoutfile("output.txt");
+    //ofstream cmdoutfile("yong_output.txt");
     //std::cout.rdbuf(cmdoutfile.rdbuf());
 
     string wheelEncoderFile = string(argv[1]) + "/wheel_encoder.txt";
@@ -122,7 +120,7 @@ int main(int argc,char **argv)
     runParticleFilter(uwb_observe_origin,uwb_observe_filtered);
 
     //yong.qi added for test
-    showOriginTime(all_imu_data,all_wheel_data,"origin_time.png",true);
+    //showOriginTime(all_imu_data,all_wheel_data,"origin_time.png",true);
     //yong.qi ended
 
     double time_imu_vslam = -1.0;
@@ -133,6 +131,7 @@ int main(int argc,char **argv)
     Eigen::Matrix4d pose_uwb_vslam = Eigen::Matrix4d::Identity();
     double time_uwb_vslam = time_imu_vslam;
     RunPoseCalibration(uwb_observe_filtered, all_vslam_data, time_uwb_vslam, pose_uwb_vslam);
+
     runAccumulateWheel(all_wheel_data);
     runAccumulateImu(all_imu_data);
 

@@ -85,7 +85,7 @@ void showOriginTime(std::vector<imu_observe> &imu_observe,
     {
         Eigen::Vector2d vslam_yawi;
         vslam_yawi[0] = wheel_observe[i].timestamp;
-        vslam_yawi[1] = -1 * wheel_observe[i].wheel.z * 180 / math_pi;
+        vslam_yawi[1] = -1*wheel_observe[i].wheel.z * 180 / math_pi;
         vslam_yaw_normal.push_back(vslam_yawi);
     }
     cv::Mat image_show(800,800,CV_8UC3,cv::Scalar(255,255,255));
@@ -250,7 +250,7 @@ void showTrajectoryErrorRealTime(std::vector<uwb_observe> &uwb_observe,
         cv::putText(image_show, std::to_string(error), cv::Point(600,40), CV_FONT_HERSHEY_DUPLEX, 1, cv::Scalar(0,0,0), 1);
 
         cv::imshow(picture_name, image_show);
-        cv::waitKey(150);
+        cv::waitKey(30);
 
         image_show(cv::Rect(400,0,400,40)).setTo(cv::Scalar(255, 255, 255));
     }
@@ -339,9 +339,9 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
         current_uwb cur_uwb;
         //cv::waitKey(30);
 
-        cur_uwb.x = uwb_observe_origin[i].point3d.x * 100;
-        cur_uwb.y = uwb_observe_origin[i].point3d.y * 100;
-        cur_uwb.z = uwb_observe_origin[i].point3d.z * 100;
+        cur_uwb.x = uwb_observe_origin[i].point3d.x ;
+        cur_uwb.y = uwb_observe_origin[i].point3d.y ;
+        cur_uwb.z = uwb_observe_origin[i].point3d.z ;
 
         measurement(0) = float(cur_uwb.x);
         measurement(1) = float(cur_uwb.y);
@@ -362,8 +362,8 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
         cv::Point3f statePt(pred(0),pred(1),pred(2));
         vparticle_pos.push_back(statePt);
 
-        std::cout<<"measPt: "<<measPt.x <<" "<<measPt.y<<" "<<measPt.z<<" "
-                 <<"statePt: "<<statePt.x <<" "<<statePt.y<<" "<<statePt.z<<std::endl;
+        //std::cout<<"measPt: "<<measPt.x <<" "<<measPt.y<<" "<<measPt.z<<" "
+                // <<"statePt: "<<statePt.x <<" "<<statePt.y<<" "<<statePt.z<<std::endl;
 
 //        for(int s = 0; s < condens.sampleCount();s++)
 //        {

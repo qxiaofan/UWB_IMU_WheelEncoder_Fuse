@@ -23,21 +23,21 @@ SET (G2O_LIB_TYPE STATIC)
 #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -mcpu=cortex-a9 -mtune=cortex-a9 -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard")
 
 #set(BOARD_EMBUILD_PATH /home/jiangdaihong/datajdh/jiangdaihong/board_workspace/px30_project/embuild_opencv_opencl_encrypt)
-#set(BOARD_EMBUILD_PATH /home/zhangjianyue/suanfafa/px30_board_env)
-#set(CMAKE_CXX_COMPILER ${BOARD_EMBUILD_PATH}/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++)
-#set(CMAKE_C_COMPILER ${BOARD_EMBUILD_PATH}/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc)
+set(BOARD_EMBUILD_PATH /home/likun/Rockchip_px30)
+set(CMAKE_CXX_COMPILER ${BOARD_EMBUILD_PATH}/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++)
+set(CMAKE_C_COMPILER ${BOARD_EMBUILD_PATH}/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc)
 
 #px30
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,--as-needed -fPIC -pthread -mcpu=cortex-a35 -mtune=cortex-a35 -march=armv8-a -O3 ")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}-Wl,--as-needed -fPIC -pthread -mcpu=cortex-a35 -mtune=cortex-a35 -march=armv8-a -O3 ")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,--as-needed -fPIC -pthread -mcpu=cortex-a35 -mtune=cortex-a35 -march=armv8-a -O3 ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}-Wl,--as-needed -fPIC -pthread -mcpu=cortex-a35 -mtune=cortex-a35 -march=armv8-a -O3 ")
 
 
 #   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -pthread -O3 -mcpu=cortex-a7 -mtune=cortex-a7 -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard")
 #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O3 -mcpu=cortex-a7 -mtune=cortex-a7 -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard")
 
 #pc
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -O3 -march=native") 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O3 -march=native")  
+#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -O3 -march=native") 
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O3 -march=native")  
 
 
 # Check C++11 or C++0x support
@@ -114,9 +114,8 @@ message("${EIGEN3_INCLUDE_DIR}")
 SET(G2O_CXX_COMPILER "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER}")
 #configure_file(config.h.in ${g2o_SOURCE_DIR}/config.h)
 
-
-find_package(OpenCV COMPONENTS opencv_core opencv_highgui opencv_imgproc opencv_calib3d opencv_video REQUIRED)
-
+set(OpenCV_DIR /opt/opencv2.4.9/share/OpenCV)
+find_package( OpenCV REQUIRED )
 message("opencv ${OpenCV_VERSION}")
 message("${OpenCV_INCLUDE_DIRS}")
 message("${OpenCV_LIBS}")

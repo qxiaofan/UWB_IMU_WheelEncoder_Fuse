@@ -95,7 +95,6 @@ void RunTimeCalibration(std::vector<imu_observe> &imu_observe, std::vector<wheel
 
     showCalibrateTime(imu_yaw_normal, vslam_yaw_normal, time_imu_vslam, "calibrate_time.png", true);
 
-
     return;
 }
 
@@ -114,16 +113,17 @@ EdgeVslamtoUwb::EdgeVslamtoUwb(  Eigen::Vector3d &vslam)
 
 void EdgeVslamtoUwb::computeError()
 {
-    const g2o::VertexSE3Expmap* v1  = static_cast<const g2o::VertexSE3Expmap*> ( _vertices[0] );
-
+    std::cout<<"get in computeError() ...."<<std::endl;
+    const g2o::VertexSE3Expmap* v1  = static_cast<const g2o::VertexSE3Expmap*> (_vertices[0]);
     Eigen::Vector3d to_uwb = v1->estimate().map(vslam_);
     _error = _measurement - to_uwb;
-
+    std::cout<<"_error == "<<_error<<std::endl;
     return;
 }
 
 void EdgeVslamtoUwb::linearizeOplus()
 {
+    std::cout<<"get in linearizeOplus() ..."<<std::endl;
     if ( level() == 1 )
     {
         _jacobianOplusXi = Eigen::Matrix<double, 3, 6>::Zero();
@@ -146,6 +146,8 @@ void EdgeVslamtoUwb::linearizeOplus()
     jacobian_vslam_ksai(1,2) = to_uwb(0,0);
 
     _jacobianOplusXi = -1 * jacobian_vslam_ksai;
+
+    std::cout<<"_jacobianOplusXi == "<<_jacobianOplusXi<<std::endl;
 
     return;
 }
@@ -178,11 +180,11 @@ void RunPoseCalibration(std::vector<uwb_observe> &uwb_observe,
         if(near < uwb_observe.size())
             matches.push_back(std::pair<size_t, size_t>(i, near));
     }
-    cout << "size of vslam and uwb matches: " << matches.size() << std::endl;
+    std::cout << "size of vslam and uwb matches: " << matches.size() << std::endl;
     if(matches.size() < 20)
         return;
 
-    // computer pose_uwb_vslam use g2o
+    // compute pose_uwb_vslam use g2o
     typedef g2o::BlockSolver< g2o::BlockSolverTraits<6, 6> > BlockSolver_6_6;
     g2o::SparseOptimizer optimizer;
     BlockSolver_6_6::LinearSolverType* linearSolver = new  g2o::LinearSolverEigen<BlockSolver_6_6::PoseMatrixType> ();
@@ -195,17 +197,20 @@ void RunPoseCalibration(std::vector<uwb_observe> &uwb_observe,
     // add pose_uwb_vslam vertex
     g2o::VertexSE3Expmap* v = new g2o::VertexSE3Expmap();
     v->setId(0);
-    v->setEstimate( g2o::SE3Quat() ); // set origin value
-    optimizer.addVertex( v );
+    v->setEstimate( g2o::SE3Quat()); //set origin value
+    optimizer.addVertex(v);
 
     // add each of matches as edge
     for ( size_t i=0; i < matches.size(); i++ )
     {
         size_t vslam_id = matches[i].first;
         Eigen::Vector3d vslam(vslam_observe[vslam_id].vslam.x,vslam_observe[vslam_id].vslam.y, 0);
+        //std::cout<<"vslam == "<<vslam<<std::endl;
+
         size_t uwb_id = matches[i].second;
         cv::Point3d uwb_id_pose = uwb_observe[uwb_id].point3d;
         Eigen::Vector3d uwb(uwb_id_pose.x, uwb_id_pose.y, 0);
+        //std::cout<<"uwb == "<<uwb<<std::endl;
 
         EdgeVslamtoUwb* edge = new EdgeVslamtoUwb(vslam);
         edge->setVertex( 0, dynamic_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(0)) );
@@ -217,13 +222,18 @@ void RunPoseCalibration(std::vector<uwb_observe> &uwb_observe,
         optimizer.addEdge(edge);
     }
 
-    optimizer.setVerbose(false);
+    optimizer.setVerbose(true);
     optimizer.initializeOptimization();
     optimizer.optimize(10);
 
     v = dynamic_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(0));
+
+    std::cout<<"v == "<<v<<std::endl;
+
     g2o::SE3Quat est_result = v->estimate();
     pose_uwb_vslam = est_result.to_homogeneous_matrix();
+
+    std::cout<<"pose_uwb_vslam = "<<pose_uwb_vslam<<std::endl;
 
     Eigen::Vector3d translate = pose_uwb_vslam.block(0,3,3,1);
     Eigen::Matrix3d rotation_matrix = pose_uwb_vslam.block(0,0,3,3);

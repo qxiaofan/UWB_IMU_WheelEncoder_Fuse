@@ -9,7 +9,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O0")
 
 find_package(OpenCV 3.0 REQUIRED)
-find_package(Eigen3 REQUIRED)
+#find_package(Eigen3 REQUIRED)
 
 set(G2O_LIBS ${PROJECT_SOURCE_DIR}/ThirdParty/g2o/build/libg2o_line_merge.a)
 message(”G2O_LIBS Path “ ${G2O_LIBS})
