@@ -37,7 +37,6 @@ void ConDensation::initSampleSet(const  cv::Mat &lower, const  cv::Mat & upper, 
 		rng[d].set(cv::getTickCount(), lowerBound(d), upperBound(d));
 	}
 
-
 	// Generating the samples 
 	for (int s = 0; s < numSamples; s++)
 	{
@@ -46,6 +45,7 @@ void ConDensation::initSampleSet(const  cv::Mat &lower, const  cv::Mat & upper, 
 			samples(s, d) = rng[d].uni();
 		}
 	}
+	std::cout<<"samples == "<<samples<<std::endl;
 }
 
 

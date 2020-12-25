@@ -90,7 +90,8 @@ int main01() {
     return 0;
 }
 
-int main(int argc,char **argv)
+//for data_20201208
+int main02(int argc,char **argv)
 {
     //ofstream cmdoutfile("yong_output.txt");
     //std::cout.rdbuf(cmdoutfile.rdbuf());
@@ -136,4 +137,29 @@ int main(int argc,char **argv)
     runAccumulateImu(all_imu_data);
 
     return 0;
+}
+
+//for data_20201224
+int main(int argc,char **argv)
+{
+    //ofstream cmdoutfile("yong_output.txt");
+    //std::cout.rdbuf(cmdoutfile.rdbuf());
+
+    std::string file_uwb_data = string(argv[1]) + "/data_UWB1.log";
+    std::vector<uwb_observe> uwb_observe_origin;
+    LoadUWBMeasure(file_uwb_data,uwb_observe_origin);
+
+    string wheel_imu_data_file = string(argv[1]) + "/data_Wheel_IMU1.txt";
+    std::vector<wheel_observe> all_wheel_data;
+    std::vector<imu_observe> all_imu_data;
+    loadWheelIMUMeasure(wheel_imu_data_file,all_wheel_data,all_imu_data);
+
+    //filter the uwb data by ukf
+    std::vector<uwb_observe> uwb_observe_filtered;
+    //runUKarmanFilter(uwb_observe_origin,uwb_observe_filtered);
+
+    runParticleFilter(uwb_observe_origin,uwb_observe_filtered);
+
+
+    return true;
 }

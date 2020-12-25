@@ -30,7 +30,8 @@ void RunTimeCalibration(std::vector<imu_observe> &imu_observe, std::vector<wheel
     {
         Eigen::Vector2d vslam_yawi;
         vslam_yawi[0] = wheel_observe[i].timestamp;
-        vslam_yawi[1] = -1 * wheel_observe[i].wheel.z * 180 / math_pi;
+        double pi = acos(-1);
+        vslam_yawi[1] = -1 * wheel_observe[i].wheel.z * 180 / pi;
         vslam_yaw_normal.push_back(vslam_yawi);
     }
 
@@ -238,7 +239,8 @@ void RunPoseCalibration(std::vector<uwb_observe> &uwb_observe,
     Eigen::Vector3d translate = pose_uwb_vslam.block(0,3,3,1);
     Eigen::Matrix3d rotation_matrix = pose_uwb_vslam.block(0,0,3,3);
     Eigen::Vector3d eula_angle = rotation_matrix.eulerAngles(2,1,0);
-    eula_angle = eula_angle * 180 / math_pi;
+    double pi = acos(-1);
+    eula_angle = eula_angle * 180 / pi;
     cout <<  "translate: " << translate.transpose() << "; eular angle: " << eula_angle.transpose() << std::endl << std::endl;
 
     // debug for pose calibration

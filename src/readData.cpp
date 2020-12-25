@@ -233,12 +233,9 @@ void LoadIMUMeasure(std::string file_path, std::vector<imu_observe> &all_observa
         cout << "open file failed !" << std::endl;
         return;
     }
-
     bool read_start = false;
-
     std::string s;
     std::getline(file, s);
-
     while(!file.eof())
     {
         if(s.empty())
@@ -270,7 +267,6 @@ void LoadIMUMeasure(std::string file_path, std::vector<imu_observe> &all_observa
 
         std::getline(file, s);
     }
-
     cout << "all_imu.size() = " << all_observation.size() << std::endl
               << "data 0 = " << all_observation[0].timestamp
               << ", " << all_observation[0].angle
@@ -282,6 +278,75 @@ void LoadIMUMeasure(std::string file_path, std::vector<imu_observe> &all_observa
               << ", " << all_observation[all_observation.size() -1].angulay_velocity
               << std::endl << std::endl;
 
+    return;
+}
+
+void loadWheelIMUMeasure(const std::string file_path, std::vector<wheel_observe> &wheel_observation,
+                         std::vector<imu_observe> &imu_observation)
+{
+    std::ifstream file;
+    file.open(file_path.c_str());
+    if(!file.is_open())
+    {
+        std::cout<<"open file failed,please check!!!"<<std::endl;
+        return;
+    }
+    bool read_start = false;
+    std::string s;
+    std::getline(file,s);
+
+    while(!file.eof())
+    {
+        if(s.empty())
+        {
+            std::getline(file,s);
+            continue;
+        }
+
+        if(!read_start)
+        {
+            read_start = true;
+            continue;
+        }
+
+        wheel_observe wheel_oi;
+        imu_observe imu_oi;
+
+        std::vector<double> split_data = split(s,',');
+
+        if(split_data.size() < 16)
+            std::cout<<"error in load imu wheel data"<<std::endl;
+
+        wheel_oi.timestamp = split_data[0]/double(1000000);
+        //here,wheel theta is poor,please do not use
+        wheel_oi.wheel = cv::Point3d(split_data[1],split_data[2],split_data[3]);
+
+        imu_oi.timestamp = split_data[0]/double(1000000);
+        imu_oi.angle = cv::Point3d(split_data[6],split_data[7],split_data[8]);
+        imu_oi.angulay_velocity = cv::Point3d(split_data[9],split_data[10],split_data[11]);
+        imu_oi.acceleration = cv::Point3d (split_data[12],split_data[13],split_data[14]);
+
+        wheel_observation.push_back(wheel_oi);
+        imu_observation.push_back(imu_oi);
+        std::getline(file,s);
+    }
+    cout << "all_wheel.size() = " << wheel_observation.size() << std::endl
+         << "data 0 = " << wheel_observation[0].timestamp
+         << ", " << wheel_observation[0].wheel << std::endl
+         << "data end = " << wheel_observation[wheel_observation.size() - 1].timestamp
+         << ", " << wheel_observation[wheel_observation.size() -1].wheel
+         << std::endl << std::endl;
+
+    cout << "all_imu.size() = " << imu_observation.size() << std::endl
+         << "data 0 = " << imu_observation[0].timestamp
+         << ", " << imu_observation[0].angle
+         << ", " << imu_observation[0].angulay_velocity
+         << ", " << imu_observation[0].acceleration << std::endl
+         << "data end = " << imu_observation[imu_observation.size() - 1].timestamp
+         << ", " << imu_observation[imu_observation.size() -1].angle
+         << ", " << imu_observation[imu_observation.size() -1].angulay_velocity
+         << ", " << imu_observation[imu_observation.size() -1].acceleration
+         << std::endl << std::endl;
     return;
 }
 

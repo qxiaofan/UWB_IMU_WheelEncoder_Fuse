@@ -85,7 +85,8 @@ void showOriginTime(std::vector<imu_observe> &imu_observe,
     {
         Eigen::Vector2d vslam_yawi;
         vslam_yawi[0] = wheel_observe[i].timestamp;
-        vslam_yawi[1] = -1*wheel_observe[i].wheel.z * 180 / math_pi;
+        double pi = acos(-1);
+        vslam_yawi[1] = -1*wheel_observe[i].wheel.z * 180 / pi;
         vslam_yaw_normal.push_back(vslam_yawi);
     }
     cv::Mat image_show(800,800,CV_8UC3,cv::Scalar(255,255,255));
@@ -316,7 +317,7 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
 
     int DP = 3;
     int nParticles = 200;
-    float xRange = 800.0f;
+    float xRange = 2048.0f;
     float flocking = 0.9f;
     float minRange[] = {0.0f,0.0f,0.0f};
     float maxRange[] = {xRange,xRange,xRange};
@@ -327,9 +328,12 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
 
     ConDensation condens(DP,nParticles);
 
-    //cv::Mat img((int)xRange,(int)xRange,CV_8UC3);
-    //cv::namedWindow("UWB particle filter");
+    cv::Mat img((int)xRange,(int)xRange,CV_8UC3);
+    cv::namedWindow("UWB particle filter");
 
+    std::cout<<"LB == "<<LB<<std::endl;
+    std::cout<<"UB == "<<UB<<std::endl;
+    std::cout<<"dyna== "<<dyna<<std::endl;
     condens.initSampleSet(LB,UB,dyna);
 
     uwb_observe uwb_filtered;
@@ -337,11 +341,11 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
     for(size_t i = 0; i < uwb_observe_origin.size(); ++i)
     {
         current_uwb cur_uwb;
-        //cv::waitKey(30);
+        cv::waitKey(30);
 
-        cur_uwb.x = uwb_observe_origin[i].point3d.x ;
-        cur_uwb.y = uwb_observe_origin[i].point3d.y ;
-        cur_uwb.z = uwb_observe_origin[i].point3d.z ;
+        cur_uwb.x = uwb_observe_origin[i].point3d.x * 100;
+        cur_uwb.y = uwb_observe_origin[i].point3d.y * 100;
+        cur_uwb.z = uwb_observe_origin[i].point3d.z * 100;
 
         measurement(0) = float(cur_uwb.x);
         measurement(1) = float(cur_uwb.y);
@@ -355,7 +359,7 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
         uwb_observe_filter.push_back(uwb_filtered);
 
         //Clear screen
-        //img = cv::Scalar::all(100);
+        img = cv::Scalar::all(50);
 
         //Update and get prediction:
         const cv::Mat_<float> &pred = condens.correct(measurement);
@@ -365,33 +369,37 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
         //std::cout<<"measPt: "<<measPt.x <<" "<<measPt.y<<" "<<measPt.z<<" "
                 // <<"statePt: "<<statePt.x <<" "<<statePt.y<<" "<<statePt.z<<std::endl;
 
-//        for(int s = 0; s < condens.sampleCount();s++)
-//        {
-//            cv::Point2f partPt(condens.sample(s,0), condens.sample(s,1));
-//            drawCross(img,partPt,cv::Scalar(255,90,(int)(s*255.0)/(float)condens.sampleCount()),2);
-//        }
-//
-//
-//        for(size_t i = 0; i < vcurrent_pos.size() - 1; i++)
-//        {
-//            cv::line(img,cv::Point2f(vcurrent_pos[i].x,vcurrent_pos[i].y),cv::Point2f(vcurrent_pos[i + 1].x,vcurrent_pos[i + 1].y),cv::Scalar(255,0,0),1);
-//        }
-//
-//        for(size_t i = 0; i < vparticle_pos.size() - 1; i++)
-//        {
-//            cv::line(img,cv::Point2f(vparticle_pos[i].x,vparticle_pos[i].y),cv::Point2f(vparticle_pos[i + 1].x,vparticle_pos[i + 1].y),cv::Scalar(0,255,0),1);
-//        }
-//
-//        drawCross(img,cv::Point2f(statePt.x,statePt.y),cv::Scalar(255,255,255),5);
-//        drawCross(img,cv::Point2f(measPt.x,measPt.y),cv::Scalar(0,0,255),5);
-//
-//        cv::imwrite("particle_filter.png",img);
-//
-//        cv::Mat imgshow = cv::Mat::zeros(640,640,CV_8UC3);
-//        cv::resize(img,imgshow,cv::Size(500,500));
-//        cv::imshow("UWB particle filter",imgshow);
-    }
+        for(int s = 0; s < condens.sampleCount();s++)
+        {
+            cv::Point2f partPt(condens.sample(s,0), condens.sample(s,1));
+            drawCross(img,partPt,cv::Scalar(255,90,(int)(s*255.0)/(float)condens.sampleCount()),2);
+        }
 
+
+        for(size_t i = 0; i < vcurrent_pos.size() - 1; i++)
+        {
+            cv::line(img,cv::Point2f(vcurrent_pos[i].x,vcurrent_pos[i].y),
+                     cv::Point2f(vcurrent_pos[i + 1].x,vcurrent_pos[i + 1].y),
+                     cv::Scalar(255,255,0),1);
+        }
+
+        for(size_t i = 0; i < vparticle_pos.size() - 1; i++)
+        {
+            cv::line(img,cv::Point2f(vparticle_pos[i].x,vparticle_pos[i].y),
+                     cv::Point2f(vparticle_pos[i + 1].x,vparticle_pos[i + 1].y),
+                     cv::Scalar(0,255,255),1);
+        }
+
+        drawCross(img,cv::Point2f(statePt.x,statePt.y),
+                  cv::Scalar(0,255,0),5);
+        drawCross(img,cv::Point2f(measPt.x,measPt.y),
+                  cv::Scalar(255,0,0),5);
+
+        cv::Mat imgshow = cv::Mat::zeros(640,640,CV_8UC3);
+        cv::resize(img,imgshow,cv::Size(500,500));
+        cv::imshow("UWB particle filter",imgshow);
+    }
+    cv::imwrite("particle_filter.png",img);
     return;
 }
 

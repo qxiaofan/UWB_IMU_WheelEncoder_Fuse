@@ -38,6 +38,6 @@
 #include <g2o/types/types_sba.h>
 
 #define yongcout std::cout << "yong: "
-#define math_pi 3.141592653
+
 
 using namespace std;

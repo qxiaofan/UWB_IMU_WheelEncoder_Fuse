@@ -19,4 +19,8 @@ void LoadWheelMeasure(std::string file_path, std::vector<wheel_observe> &all_obs
 
 void LoadVslamMeasure(std::string file_path, std::vector<vslam_observe> &all_observation);
 
+void loadWheelIMUMeasure(const std::string file_path,
+                         std::vector<wheel_observe> &wheel_observation,
+                         std::vector<imu_observe> &imu_observation);
+
 #endif //SERIALPORT_KALMAN_FILTER_READDATA_H
