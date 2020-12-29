@@ -6,90 +6,90 @@
 #include "CoreAlgorithm.h"
 #include "calibrate.h"
 
-//利用UWB采集定位数据，保存到data.txt文件中
-int main01() {
-
-    //自动识别串口
-    list<string> l = getComList();
-
-    list<string>::iterator it = l.begin();
-
-    std::string serial_port= "";
-    std::string b = "ACM";
-    string::size_type idx;
-
-    int success_num = 0;
-
-    while (it != l.end()) {
-        cout << *it << endl;
-
-        idx = it->find(b);
-        if(idx != string::npos)
-        {
-            cout<<"found\n";
-            success_num++;
-            serial_port = *it;
-        }
-        it++;
-    }
-
-    if(success_num == 1)
-    {
-        std::cout<<"find serial port, OK!!!"<<std::endl;
-        std::cout<<"serial_port == "<<serial_port<<std::endl;
-    }
-
-    if(success_num > 1)
-    {
-        std::cout<<"find more than one serial port,please choose check!!!"<<std::endl;
-    }
-
-    if(success_num < 1)
-    {
-        std::cout<<"not found right serial port,please check!!!"<<std::endl;
-    }
-
-    
-    SerialPort UART;
-    UART.Config.BaudRate = SerialPort::BR115200;
-    UART.Config.DataBits = SerialPort::DataBits8;
-    UART.Config.StopBits = SerialPort::StopBits1;
-    UART.Config.Parity = SerialPort::ParityNone;
-    //UART.Config.DevicePath = (char *) &"/dev/ttyACM0";
-    UART.Config.DevicePath = const_cast<char*>(serial_port.c_str());
-
-    if (UART.Open() == false)printf("OPEN error!\n");
-    else printf("OPEN OK!\n");
-    if (UART.LoadConfig() == false)printf("Set error!\n");
-    else printf("Set OK!\n");
-
-    //string RXtxt = "apg";
-
-    //UWB需要两次输入enter，这里的13对应的是enter对应的char
-    UART << 13;
-    usleep(100);
-    UART << 13;
-    
-    int cmdID = 0;
-    while (1) {
-        string scmd = "";
-        cin >> scmd;
-        if (scmd == "exit") {
-            break;
-        }
-        std::cout<<"input == "<<scmd.c_str()<<std::endl;
-        UART << scmd.c_str();
-
-        UART << '\n';
-        cmdID++;
-        cout << "cmdID = " << cmdID << endl;
-        sleep(1);
-    }
-
-    cout << "finish run!" << endl;
-    return 0;
-}
-
+////利用UWB采集定位数据，保存到data.txt文件中
+//int main01() {
+//
+//    //自动识别串口
+//    list<string> l = getComList();
+//
+//    list<string>::iterator it = l.begin();
+//
+//    std::string serial_port= "";
+//    std::string b = "ACM";
+//    string::size_type idx;
+//
+//    int success_num = 0;
+//
+//    while (it != l.end()) {
+//        cout << *it << endl;
+//
+//        idx = it->find(b);
+//        if(idx != string::npos)
+//        {
+//            cout<<"found\n";
+//            success_num++;
+//            serial_port = *it;
+//        }
+//        it++;
+//    }
+//
+//    if(success_num == 1)
+//    {
+//        std::cout<<"find serial port, OK!!!"<<std::endl;
+//        std::cout<<"serial_port == "<<serial_port<<std::endl;
+//    }
+//
+//    if(success_num > 1)
+//    {
+//        std::cout<<"find more than one serial port,please choose check!!!"<<std::endl;
+//    }
+//
+//    if(success_num < 1)
+//    {
+//        std::cout<<"not found right serial port,please check!!!"<<std::endl;
+//    }
+//
+//
+//    SerialPort UART;
+//    UART.Config.BaudRate = SerialPort::BR115200;
+//    UART.Config.DataBits = SerialPort::DataBits8;
+//    UART.Config.StopBits = SerialPort::StopBits1;
+//    UART.Config.Parity = SerialPort::ParityNone;
+//    //UART.Config.DevicePath = (char *) &"/dev/ttyACM0";
+//    UART.Config.DevicePath = const_cast<char*>(serial_port.c_str());
+//
+//    if (UART.Open() == false)printf("OPEN error!\n");
+//    else printf("OPEN OK!\n");
+//    if (UART.LoadConfig() == false)printf("Set error!\n");
+//    else printf("Set OK!\n");
+//
+//    //string RXtxt = "apg";
+//
+//    //UWB需要两次输入enter，这里的13对应的是enter对应的char
+//    UART << 13;
+//    usleep(100);
+//    UART << 13;
+//
+//    int cmdID = 0;
+//    while (1) {
+//        string scmd = "";
+//        cin >> scmd;
+//        if (scmd == "exit") {
+//            break;
+//        }
+//        std::cout<<"input == "<<scmd.c_str()<<std::endl;
+//        UART << scmd.c_str();
+//
+//        UART << '\n';
+//        cmdID++;
+//        cout << "cmdID = " << cmdID << endl;
+//        sleep(1);
+//    }
+//
+//    cout << "finish run!" << endl;
+//    return 0;
+//}
+//
 //for data_20201208
 int main02(int argc,char **argv)
 {
@@ -142,17 +142,18 @@ int main02(int argc,char **argv)
 //for data_20201224
 int main(int argc,char **argv)
 {
-    //ofstream cmdoutfile("yong_output.txt");
-    //std::cout.rdbuf(cmdoutfile.rdbuf());
+    ofstream cmdoutfile("/home/yong/workspace/2_project_files/UWB_IMU_WheelEncoder_Fuse/data_all_1/nParticles_2000_xRange_2048/nParticles_2000_xRange_2048.txt");
+    std::cout.rdbuf(cmdoutfile.rdbuf());
 
-    std::string file_uwb_data = string(argv[1]) + "/data_UWB1.log";
+    std::string file_uwb_data = "/home/yong/workspace/8-UWB/data_all_1/data_UWB1.log";
+    std::cout<<"uwb_data_path == "<<file_uwb_data<<std::endl;
     std::vector<uwb_observe> uwb_observe_origin;
     LoadUWBMeasure(file_uwb_data,uwb_observe_origin);
 
-    string wheel_imu_data_file = string(argv[1]) + "/data_Wheel_IMU1.txt";
-    std::vector<wheel_observe> all_wheel_data;
-    std::vector<imu_observe> all_imu_data;
-    loadWheelIMUMeasure(wheel_imu_data_file,all_wheel_data,all_imu_data);
+//    string wheel_imu_data_file = string(argv[1]) + "/data_Wheel_IMU.txt";
+//    std::vector<wheel_observe> all_wheel_data;
+//    std::vector<imu_observe> all_imu_data;
+//    loadWheelIMUMeasure(wheel_imu_data_file,all_wheel_data,all_imu_data);
 
     //filter the uwb data by ukf
     std::vector<uwb_observe> uwb_observe_filtered;

@@ -316,7 +316,7 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
     std::vector<cv::Point3f> vcurrent_pos, vparticle_pos;
 
     int DP = 3;
-    int nParticles = 200;
+    int nParticles = 2000;
     float xRange = 2048.0f;
     float flocking = 0.9f;
     float minRange[] = {0.0f,0.0f,0.0f};
@@ -331,17 +331,13 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
     cv::Mat img((int)xRange,(int)xRange,CV_8UC3);
     cv::namedWindow("UWB particle filter");
 
-    std::cout<<"LB == "<<LB<<std::endl;
-    std::cout<<"UB == "<<UB<<std::endl;
-    std::cout<<"dyna== "<<dyna<<std::endl;
     condens.initSampleSet(LB,UB,dyna);
-
     uwb_observe uwb_filtered;
 
     for(size_t i = 0; i < uwb_observe_origin.size(); ++i)
     {
         current_uwb cur_uwb;
-        cv::waitKey(30);
+        cv::waitKey(10);
 
         cur_uwb.x = uwb_observe_origin[i].point3d.x * 100;
         cur_uwb.y = uwb_observe_origin[i].point3d.y * 100;
@@ -366,15 +362,15 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
         cv::Point3f statePt(pred(0),pred(1),pred(2));
         vparticle_pos.push_back(statePt);
 
-        //std::cout<<"measPt: "<<measPt.x <<" "<<measPt.y<<" "<<measPt.z<<" "
-                // <<"statePt: "<<statePt.x <<" "<<statePt.y<<" "<<statePt.z<<std::endl;
+        std::cout.precision(13);
+        std::cout<<uwb_observe_origin[i].timestamp<<" "<<measPt.x <<" "<<measPt.y<<" "<<measPt.z<<" "
+                 <<statePt.x <<" "<<statePt.y<<" "<<statePt.z<<std::endl;
 
         for(int s = 0; s < condens.sampleCount();s++)
         {
             cv::Point2f partPt(condens.sample(s,0), condens.sample(s,1));
             drawCross(img,partPt,cv::Scalar(255,90,(int)(s*255.0)/(float)condens.sampleCount()),2);
         }
-
 
         for(size_t i = 0; i < vcurrent_pos.size() - 1; i++)
         {
@@ -396,7 +392,7 @@ void runParticleFilter(std::vector<uwb_observe> &uwb_observe_origin,std::vector<
                   cv::Scalar(255,0,0),5);
 
         cv::Mat imgshow = cv::Mat::zeros(640,640,CV_8UC3);
-        cv::resize(img,imgshow,cv::Size(500,500));
+        cv::resize(img,imgshow,cv::Size(640,640));
         cv::imshow("UWB particle filter",imgshow);
     }
     cv::imwrite("particle_filter.png",img);
